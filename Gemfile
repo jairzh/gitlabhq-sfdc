@@ -20,6 +20,7 @@ gem 'omniauth', "~> 1.1.3"
 gem 'omniauth-google-oauth2'
 gem 'omniauth-twitter'
 gem 'omniauth-github'
+gem "omniauth-salesforce"
 
 # Extracting information from a git repository
 # Since gollum requires grit we cannot use gitlab-grit gem name any more. Use grit instead
