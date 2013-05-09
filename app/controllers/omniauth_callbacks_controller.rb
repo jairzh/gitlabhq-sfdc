@@ -28,12 +28,13 @@ class OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def handle_omniauth
     oauth = request.env['omniauth.auth']
-    provider, uid = oauth['provider'], oauth['uid']
+    provider, uid, avatar_url = oauth['provider'], oauth['uid'], oauth['info']['image']
 
     if current_user
       # Change a logged-in user's authentication method:
       current_user.extern_uid = uid
       current_user.provider = provider
+      current_user.extern_avatar_url = avatar_url
       current_user.save
       redirect_to profile_path
     else

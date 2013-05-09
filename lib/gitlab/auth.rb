@@ -65,6 +65,19 @@ module Gitlab
           @user
         end
       end
+
+      update_extern_avatar_url(@user, auth)
+
+      @user
+    end
+
+    def update_extern_avatar_url(user, auth)
+      avatar_url = auth.info.image
+
+      if user.extern_avatar_url != avatar_url
+        user.extern_avatar_url = avatar_url
+        user.save
+      end
     end
 
     def log

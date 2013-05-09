@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130410175022) do
+ActiveRecord::Schema.define(:version => 20130508071426) do
 
   create_table "events", :force => true do |t|
     t.string   "target_type"
@@ -270,6 +270,7 @@ ActiveRecord::Schema.define(:version => 20130410175022) do
     t.string   "state"
     t.integer  "color_scheme_id",                       :default => 1,     :null => false
     t.integer  "notification_level",                    :default => 1,     :null => false
+    t.string   "extern_avatar_url"
   end
 
   add_index "users", ["admin"], :name => "index_users_on_admin"
