@@ -33,7 +33,8 @@ module ApplicationHelper
 
   def gravatar_icon(user_email = '', size = nil)
     size = 40 if size.nil? || size <= 0
-    extern_avatar_url = current_user.extern_avatar_url
+    user = User.find_by_email(user_email);
+    extern_avatar_url = user.extern_avatar_url
 
     if !extern_avatar_url.nil?
       extern_avatar_url
