@@ -101,7 +101,7 @@ GitLab Shell is a ssh access and repository management software developed specia
     cd gitlab-shell
 
     # switch to right version
-    git checkout v1.2.0
+    git checkout v1.3.0
 
     cp config.yml.example config.yml
 
@@ -132,10 +132,10 @@ To setup the MySQL/PostgreSQL database and dependencies please see [`doc/install
     cd /home/git/gitlab
 
     # Checkout to stable release
-    sudo -u git -H git checkout 5-1-stable
+    sudo -u git -H git checkout 5-0-stable
 
 **Note:**
-You can change `5-1-stable` to `master` if you want the *bleeding edge* version, but
+You can change `5-0-stable` to `master` if you want the *bleeding edge* version, but
 do so with caution!
 
 ## Configure it
@@ -158,13 +158,11 @@ do so with caution!
     # Create directory for satellites
     sudo -u git -H mkdir /home/git/gitlab-satellites
 
-    # Create directories for sockets/pids and make sure GitLab can write to them
+    # Create directory for pids and make sure GitLab can write to it
     sudo -u git -H mkdir tmp/pids/
-    sudo -u git -H mkdir tmp/sockets/
     sudo chmod -R u+rwX  tmp/pids/
-    sudo chmod -R u+rwX  tmp/sockets/
 
-    # Copy the example of Puma config
+    # Copy the example Unicorn config
     sudo -u git -H cp config/puma.rb.example config/puma.rb
 
 **Important Note:**
@@ -202,7 +200,7 @@ Make sure to update username/password in config/database.yml.
 
 Download the init script (will be /etc/init.d/gitlab):
 
-    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-1-stable/init.d/gitlab
+    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlabhq/master/lib/support/init.d/gitlab
     sudo chmod +x /etc/init.d/gitlab
 
 Make GitLab start on boot:
@@ -243,7 +241,7 @@ If you can't or don't want to use Nginx as your web server, have a look at the
 
 Download an example site config:
 
-    sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-1-stable/nginx/gitlab
+    sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlabhq/master/lib/support/nginx/gitlab
     sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
 
 Make sure to edit the config file to match your setup:
