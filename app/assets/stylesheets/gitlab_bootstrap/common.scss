@@ -19,6 +19,7 @@
 .append-right-20 { margin-right:20px }
 .append-bottom-10 { margin-bottom:10px }
 .append-bottom-20 { margin-bottom:20px }
+.inline { display: inline-block }
 
 .padded { padding:20px }
 .ipadded { padding:20px!important }
@@ -65,11 +66,7 @@ input[type='text'].danger {
   text-shadow: 0 1px 1px #fff
 }
 
-fieldset legend { font-size: 17px; }
-
-/** PAGINATION **/
-.gitlab_pagination {
-}
+fieldset legend { font-size: 15px; }
 
 .tab-content {
   overflow: visible;
@@ -79,4 +76,17 @@ fieldset legend { font-size: 17px; }
   .only-wide {
     display: none;
   }
+}
+
+.pagination ul > li > a, .pagination ul > li >span {
+  @include linear-gradient(#f1f1f1, #e1e1e1);
+  color: #333;
+  text-shadow: 0 1px 1px #FFF;
+}
+
+pre.well-pre {
+  border: 1px solid #EEE;
+  background: #f9f9f9;
+  border-radius: 0;
+  color: #555;
 }

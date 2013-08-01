@@ -1,6 +1,6 @@
 # NotificationService class
 #
-# Used for notifing users with emails about different events
+# Used for notifying users with emails about different events
 #
 # Ex.
 #   NotificationService.new.new_issue(issue, current_user)
@@ -90,7 +90,7 @@ class NotificationService
 
   # Notify new user with email after creation
   def new_user(user)
-    # Dont email omniauth created users
+    # Don't email omniauth created users
     mailer.new_user_email(user.id, user.password) unless user.extern_uid?
   end
 
@@ -110,9 +110,11 @@ class NotificationService
     else
       opts.merge!(noteable_id: note.noteable_id)
       target = note.noteable
-      recipients = []
-      recipients << target.assignee if target.respond_to?(:assignee)
-      recipients << target.author if target.respond_to?(:author)
+      if target.respond_to?(:participants)
+        recipients = target.participants
+      else
+        recipients = []
+      end
     end
 
     # Get users who left comment in thread
@@ -147,14 +149,19 @@ class NotificationService
 
   # Get project users with WATCH notification level
   def project_watchers(project)
+    project_watchers = []
+    member_methods = { project => :users_projects }
+    member_methods.merge!(project.group => :users_groups) if project.group
 
-    # Get project notification settings since it has higher priority
-    user_ids = project.users_projects.where(notification_level: Notification::N_WATCH).pluck(:user_id)
-    project_watchers = User.where(id: user_ids)
+    member_methods.each do |object, member_method|
+      # Get project notification settings since it has higher priority
+      user_ids = object.send(member_method).where(notification_level: Notification::N_WATCH).pluck(:user_id)
+      project_watchers += User.where(id: user_ids)
 
-    # next collect users who use global settings with watch state
-    user_ids = project.users_projects.where(notification_level: Notification::N_GLOBAL).pluck(:user_id)
-    project_watchers += User.where(id: user_ids, notification_level: Notification::N_WATCH)
+      # next collect users who use global settings with watch state
+      user_ids = object.send(member_method).where(notification_level: Notification::N_GLOBAL).pluck(:user_id)
+      project_watchers += User.where(id: user_ids, notification_level: Notification::N_WATCH)
+    end
 
     project_watchers.uniq
   end
@@ -169,6 +176,10 @@ class NotificationService
 
       tm = project.users_projects.find_by_user_id(user.id)
 
+      if !tm && project.group
+        tm = project.group.users_groups.find_by_user_id(user.id)
+      end
+
       # reject users who globally disabled notification and has no membership
       next user.notification.disabled? unless tm
 
@@ -181,7 +192,12 @@ class NotificationService
   end
 
   def new_resource_email(target, method)
-    recipients = reject_muted_users([target.assignee], target.project)
+    if target.respond_to?(:participants)
+      recipients = target.participants
+    else
+      recipients = []
+    end
+    recipients = reject_muted_users(recipients, target.project)
     recipients = recipients.concat(project_watchers(target.project)).uniq
     recipients.delete(target.author)
 

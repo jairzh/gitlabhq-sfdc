@@ -6,8 +6,8 @@
 #  name                   :string(255)
 #  path                   :string(255)
 #  description            :text
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
+#  created_at             :datetime
+#  updated_at             :datetime
 #  creator_id             :integer
 #  default_branch         :string(255)
 #  issues_enabled         :boolean          default(TRUE), not null
@@ -20,6 +20,7 @@
 #  issues_tracker_id      :string(255)
 #  snippets_enabled       :boolean          default(TRUE), not null
 #  last_activity_at       :datetime
+#  imported               :boolean          default(FALSE), not null
 #
 
 require 'spec_helper'
@@ -36,10 +37,12 @@ describe Project do
     it { should have_many(:milestones).dependent(:destroy) }
     it { should have_many(:users_projects).dependent(:destroy) }
     it { should have_many(:notes).dependent(:destroy) }
-    it { should have_many(:snippets).dependent(:destroy) }
-    it { should have_many(:deploy_keys).dependent(:destroy) }
+    it { should have_many(:snippets).class_name('ProjectSnippet').dependent(:destroy) }
+    it { should have_many(:deploy_keys_projects).dependent(:destroy) }
+    it { should have_many(:deploy_keys) }
     it { should have_many(:hooks).dependent(:destroy) }
     it { should have_many(:protected_branches).dependent(:destroy) }
+    it { should have_one(:forked_project_link).dependent(:destroy) }
   end
 
   describe "Mass assignment" do
@@ -59,10 +62,6 @@ describe Project do
     it { should ensure_length_of(:path).is_within(0..255) }
     it { should ensure_length_of(:description).is_within(0..2000) }
     it { should validate_presence_of(:creator) }
-    it { should ensure_inclusion_of(:issues_enabled).in_array([true, false]) }
-    it { should ensure_inclusion_of(:wall_enabled).in_array([true, false]) }
-    it { should ensure_inclusion_of(:merge_requests_enabled).in_array([true, false]) }
-    it { should ensure_inclusion_of(:wiki_enabled).in_array([true, false]) }
     it { should ensure_length_of(:issues_tracker_id).is_within(0..255) }
 
     it "should not allow new projects beyond user limits" do
@@ -236,7 +235,7 @@ describe Project do
       project.can_have_issues_tracker_id?.should be_false
     end
 
-    it "should be always false if issues disbled" do
+    it "should be always false if issues disabled" do
       project.issues_enabled = false
       ext_project.issues_enabled = false
 

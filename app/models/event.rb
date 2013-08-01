@@ -54,6 +54,27 @@ class Event < ActiveRecord::Base
         Event::COMMENTED
       end
     end
+
+    def create_ref_event(project, user, ref, action = 'add', prefix = 'refs/heads')
+      if action.to_s == 'add'
+        before = '00000000'
+        after = ref.commit.id
+      else
+        before = ref.commit.id
+        after = '00000000'
+      end
+
+      Event.create(
+        project: project,
+        action: Event::PUSHED,
+        data: {
+          ref: "#{prefix}/#{ref.name}",
+          before: before,
+          after: after
+        },
+        author_id: user.id
+      )
+    end
   end
 
   def proper?
@@ -68,14 +89,16 @@ class Event < ActiveRecord::Base
 
   def project_name
     if project
-      project.name
+      project.name_with_namespace
     else
       "(deleted project)"
     end
   end
 
   def target_title
-    target.try :title
+    if target && target.respond_to?(:title)
+      target.title
+    end
   end
 
   def push?
@@ -239,6 +262,10 @@ class Event < ActiveRecord::Base
 
   def note_commit?
     target.noteable_type == "Commit"
+  end
+
+  def note_project_snippet?
+    target.noteable_type == "Snippet"
   end
 
   def note_target

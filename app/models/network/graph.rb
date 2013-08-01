@@ -8,10 +8,11 @@ module Network
       @max_count ||= 650
     end
 
-    def initialize project, ref, commit
+    def initialize project, ref, commit, filter_ref
       @project = project
       @ref = ref
       @commit = commit
+      @filter_ref = filter_ref
       @repo = project.repo
 
       @commits = collect_commits
@@ -24,7 +25,7 @@ module Network
     def collect_notes
       h = Hash.new(0)
       @project.notes.where('noteable_type = ?' ,"Commit").group('notes.commit_id').select('notes.commit_id, count(notes.id) as note_count').each do |item|
-        h[item["commit_id"]] = item["note_count"]
+        h[item.commit_id] = item.note_count.to_i
       end
       h
     end
@@ -42,9 +43,9 @@ module Network
 
     # Method is adding time and space on the
     # list of commits. As well as returns date list
-    # corelated with time set on commits.
+    # correlated with time set on commits.
     #
-    # @return [Array<TimeDate>] list of commit dates corelated with time on commits
+    # @return [Array<TimeDate>] list of commit dates correlated with time on commits
     def index_commits
       days = []
       @map = {}
@@ -107,7 +108,9 @@ module Network
         skip: skip
       }
 
-      Grit::Commit.find_all(@repo, nil, opts)
+      ref = @ref if @filter_ref
+
+      Grit::Commit.find_all(@repo, ref, opts)
     end
 
     def commits_sort_by_ref

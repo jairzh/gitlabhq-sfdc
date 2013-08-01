@@ -9,8 +9,8 @@
 #  author_id     :integer
 #  assignee_id   :integer
 #  title         :string(255)
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  created_at    :datetime
+#  updated_at    :datetime
 #  st_commits    :text(2147483647)
 #  st_diffs      :text(2147483647)
 #  milestone_id  :integer
@@ -36,7 +36,7 @@ describe MergeRequest do
     it { should respond_to(:can_be_merged?) }
     it { should respond_to(:cannot_be_merged?) }
   end
- 
+
   describe 'modules' do
     it { should include_module(Issuable) }
   end

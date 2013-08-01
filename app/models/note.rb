@@ -6,8 +6,8 @@
 #  note          :text
 #  noteable_type :string(255)
 #  author_id     :integer
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  created_at    :datetime
+#  updated_at    :datetime
 #  project_id    :integer
 #  attachment    :string(255)
 #  line_code     :string(255)
@@ -19,6 +19,8 @@ require 'carrierwave/orm/activerecord'
 require 'file_size_validator'
 
 class Note < ActiveRecord::Base
+  include Mentionable
+
   attr_accessible :note, :noteable, :noteable_id, :noteable_type, :project_id,
                   :attachment, :line_code, :commit_id
 
@@ -158,5 +160,11 @@ class Note < ActiveRecord::Base
     else
       "wall"
     end
+  end
+
+  # FIXME: Hack for polymorphic associations with STI
+  #        For more information wisit http://api.rubyonrails.org/classes/ActiveRecord/Associations/ClassMethods.html#label-Polymorphic+Associations
+  def noteable_type=(sType)
+    super(sType.to_s.classify.constantize.base_class.to_s)
   end
 end

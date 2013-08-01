@@ -109,7 +109,7 @@ module CommitsHelper
   end
 
   def commit_to_html commit
-    escape_javascript(render 'commits/commit', commit: commit)
+    escape_javascript(render 'projects/commits/commit', commit: commit)
   end
 
   def diff_line_content(line)
@@ -134,7 +134,7 @@ module CommitsHelper
       parts = @path.split('/')
 
       parts.each_with_index do |part, i|
-        crumbs += content_tag(:span, '/', class: 'divider')
+        crumbs += content_tag(:span, ' / ', class: 'divider')
         crumbs += content_tag(:li) do
           # The text is just the individual part, but the link needs all the parts before it
           link_to part, project_commits_path(@project, tree_join(@ref, parts[0..i].join('/')))
@@ -167,10 +167,15 @@ module CommitsHelper
 
     user = User.where('name like ? or email like ?', source_name, source_email).first
 
+    options = {
+      class: "commit-#{options[:source]}-link has_tooltip",
+      data: { :'original-title' => sanitize(source_email) }
+    }
+
     if user.nil?
-      mail_to(source_email, text.html_safe, class: "commit-#{options[:source]}-link")
+      mail_to(source_email, text.html_safe, options)
     else
-      link_to(text.html_safe, user_path(user), class: "commit-#{options[:source]}-link")
+      link_to(text.html_safe, user_path(user), options)
     end
   end
 end

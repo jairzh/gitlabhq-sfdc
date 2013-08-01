@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "Gitlab Flavored Markdown" do
+describe "GitLab Flavored Markdown" do
   let(:project) { create(:project_with_code) }
   let(:issue) { create(:issue, project: project) }
   let(:merge_request) { create(:merge_request, project: project) }
@@ -41,7 +41,7 @@ describe "Gitlab Flavored Markdown" do
     end
 
     it "should render title in repositories#branches" do
-      visit branches_project_repository_path(project)
+      visit project_branches_path(project)
 
       page.should have_link("##{issue.id}")
     end

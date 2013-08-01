@@ -11,7 +11,16 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130508071426) do
+ActiveRecord::Schema.define(:version => 20130624162710) do
+
+  create_table "deploy_keys_projects", :force => true do |t|
+    t.integer  "deploy_key_id", :null => false
+    t.integer  "project_id",    :null => false
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
+  end
+
+  add_index "deploy_keys_projects", ["project_id"], :name => "index_deploy_keys_projects_on_project_id"
 
   create_table "events", :force => true do |t|
     t.string   "target_type"
@@ -31,6 +40,15 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
   add_index "events", ["project_id"], :name => "index_events_on_project_id"
   add_index "events", ["target_id"], :name => "index_events_on_target_id"
   add_index "events", ["target_type"], :name => "index_events_on_target_type"
+
+  create_table "forked_project_links", :force => true do |t|
+    t.integer  "forked_to_project_id",   :null => false
+    t.integer  "forked_from_project_id", :null => false
+    t.datetime "created_at",             :null => false
+    t.datetime "updated_at",             :null => false
+  end
+
+  add_index "forked_project_links", ["forked_to_project_id"], :name => "index_forked_project_links_on_forked_to_project_id", :unique => true
 
   create_table "issues", :force => true do |t|
     t.string   "title"
@@ -59,12 +77,10 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.datetime "updated_at"
     t.text     "key"
     t.string   "title"
-    t.string   "identifier"
-    t.integer  "project_id"
+    t.string   "type"
+    t.string   "fingerprint"
   end
 
-  add_index "keys", ["identifier"], :name => "index_keys_on_identifier"
-  add_index "keys", ["project_id"], :name => "index_keys_on_project_id"
   add_index "keys", ["user_id"], :name => "index_keys_on_user_id"
 
   create_table "merge_requests", :force => true do |t|
@@ -133,8 +149,10 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.integer  "noteable_id"
   end
 
+  add_index "notes", ["author_id"], :name => "index_notes_on_author_id"
   add_index "notes", ["commit_id"], :name => "index_notes_on_commit_id"
   add_index "notes", ["created_at"], :name => "index_notes_on_created_at"
+  add_index "notes", ["noteable_id", "noteable_type"], :name => "index_notes_on_noteable_id_and_noteable_type"
   add_index "notes", ["noteable_type"], :name => "index_notes_on_noteable_type"
   add_index "notes", ["project_id", "noteable_type"], :name => "index_notes_on_project_id_and_noteable_type"
   add_index "notes", ["project_id"], :name => "index_notes_on_project_id"
@@ -157,6 +175,7 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.string   "issues_tracker_id"
     t.boolean  "snippets_enabled",       :default => true,     :null => false
     t.datetime "last_activity_at"
+    t.boolean  "imported",               :default => false,    :null => false
   end
 
   add_index "projects", ["creator_id"], :name => "index_projects_on_owner_id"
@@ -170,6 +189,8 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.datetime "updated_at", :null => false
   end
 
+  add_index "protected_branches", ["project_id"], :name => "index_protected_branches_on_project_id"
+
   create_table "services", :force => true do |t|
     t.string   "type"
     t.string   "title"
@@ -179,21 +200,26 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.datetime "updated_at",                     :null => false
     t.boolean  "active",      :default => false, :null => false
     t.string   "project_url"
+    t.string   "subdomain"
+    t.string   "room"
   end
 
   add_index "services", ["project_id"], :name => "index_services_on_project_id"
 
   create_table "snippets", :force => true do |t|
     t.string   "title"
-    t.text     "content"
-    t.integer  "author_id",  :null => false
-    t.integer  "project_id", :null => false
+    t.text     "content",    :limit => 2147483647
+    t.integer  "author_id",                                          :null => false
+    t.integer  "project_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "file_name"
     t.datetime "expires_at"
+    t.boolean  "private",                          :default => true, :null => false
+    t.string   "type"
   end
 
+  add_index "snippets", ["author_id"], :name => "index_snippets_on_author_id"
   add_index "snippets", ["created_at"], :name => "index_snippets_on_created_at"
   add_index "snippets", ["expires_at"], :name => "index_snippets_on_expires_at"
   add_index "snippets", ["project_id"], :name => "index_snippets_on_project_id"
@@ -271,13 +297,27 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.integer  "color_scheme_id",                       :default => 1,     :null => false
     t.integer  "notification_level",                    :default => 1,     :null => false
     t.string   "extern_avatar_url"
+    t.datetime "password_expires_at"
+    t.integer  "created_by_id"
   end
 
   add_index "users", ["admin"], :name => "index_users_on_admin"
+  add_index "users", ["authentication_token"], :name => "index_users_on_authentication_token", :unique => true
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["name"], :name => "index_users_on_name"
   add_index "users", ["reset_password_token"], :name => "index_users_on_reset_password_token", :unique => true
   add_index "users", ["username"], :name => "index_users_on_username"
+
+  create_table "users_groups", :force => true do |t|
+    t.integer  "group_access",                      :null => false
+    t.integer  "group_id",                          :null => false
+    t.integer  "user_id",                           :null => false
+    t.datetime "created_at",                        :null => false
+    t.datetime "updated_at",                        :null => false
+    t.integer  "notification_level", :default => 3, :null => false
+  end
+
+  add_index "users_groups", ["user_id"], :name => "index_users_groups_on_user_id"
 
   create_table "users_projects", :force => true do |t|
     t.integer  "user_id",                           :null => false
@@ -300,5 +340,7 @@ ActiveRecord::Schema.define(:version => 20130508071426) do
     t.string   "type",       :default => "ProjectHook"
     t.integer  "service_id"
   end
+
+  add_index "web_hooks", ["project_id"], :name => "index_web_hooks_on_project_id"
 
 end
