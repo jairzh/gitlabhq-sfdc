@@ -183,6 +183,10 @@ class User < ActiveRecord::Base
       gitlab_auth.find_or_new_for_omniauth(auth)
     end
 
+    def create_extern_avatar(auth)
+      gitlab_auth.create_extern_avatar(auth)
+    end
+
     def find_for_ldap_auth(auth, signed_in_resource = nil)
       gitlab_auth.find_for_ldap_auth(auth, signed_in_resource)
     end

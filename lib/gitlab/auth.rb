@@ -1,3 +1,5 @@
+require 'open-uri'
+
 module Gitlab
   class Auth
     def find(login, password)
@@ -74,21 +76,25 @@ module Gitlab
       else
         if Gitlab.config.omniauth['allow_single_sign_on']
           @user = create_from_omniauth(auth)
+          if provider == 'salesforce'
+            create_extern_avatar(auth)
+          end
           @user
         end
       end
 
-      update_extern_avatar_url(@user, auth)
-
       @user
     end
 
-    def update_extern_avatar_url(user, auth)
+    def create_extern_avatar(auth)
       avatar_url = auth.info.image
+      email = auth.info.email.to_s.downcase unless auth.info.email.nil?
 
-      if user.extern_avatar_url != avatar_url
-        user.extern_avatar_url = avatar_url
-        user.save
+      if !avatar_url.nil? && !email.nil?
+        avatar_img_name = 'app/assets/images/avatars/' + email + '.png'
+        open(avatar_img_name, 'wb') do |file|
+          file << open(avatar_url).read
+        end
       end
     end
 
