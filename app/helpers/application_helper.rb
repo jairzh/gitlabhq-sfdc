@@ -51,11 +51,11 @@ module ApplicationHelper
 
   def gravatar_icon(user_email = '', size = nil)
     size = 40 if size.nil? || size <= 0
-    user = User.find_by_email(user_email);
-    extern_avatar_url = user.extern_avatar_url
 
-    if !extern_avatar_url.nil?
-      extern_avatar_url
+    avatar_path = 'app/assets/images/avatars/' + user_email + '.png'
+
+    if File.exist?(avatar_path)
+      'avatars/' + user_email + '.png'
     elsif !Gitlab.config.gravatar.enabled || user_email.blank?
       'no_avatar.png'
     else
