@@ -2,22 +2,73 @@ class DashboardMergeRequests < Spinach::FeatureSteps
   include SharedAuthentication
   include SharedPaths
 
-  Then 'I should see my merge requests' do
-    merge_requests = @user.merge_requests
-    merge_requests.each do |mr|
-      page.should have_content(mr.title[0..10])
-      page.should have_content(mr.project.name)
+  step 'I should see merge requests assigned to me' do
+    should_see(assigned_merge_request)
+    should_not_see(authored_merge_request)
+    should_not_see(other_merge_request)
+  end
+
+  step 'I should see merge requests authored by me' do
+    should_see(authored_merge_request)
+    should_not_see(assigned_merge_request)
+    should_not_see(other_merge_request)
+  end
+
+  step 'I should see all merge requests' do
+    should_see(authored_merge_request)
+    should_see(assigned_merge_request)
+    should_see(other_merge_request)
+  end
+
+  step 'I have authored merge requests' do
+    authored_merge_request
+  end
+
+  step 'I have assigned merge requests' do
+    assigned_merge_request
+  end
+
+  step 'I have other merge requests' do
+    other_merge_request
+  end
+
+  step 'I click "Authored by me" link' do
+    within ".scope-filter" do
+      click_link 'Created by me'
     end
   end
 
-  And 'I have authored merge requests' do
-    project1 = create :project
-    project2 = create :project
+  step 'I click "All" link' do
+    within ".scope-filter" do
+      click_link "Everyone's"
+    end
+  end
 
-    project1.team << [@user, :master]
-    project2.team << [@user, :master]
+  def should_see(merge_request)
+    page.should have_content(merge_request.title[0..10])
+  end
 
-    merge_request1 = create :merge_request, author: @user, project: project1
-    merge_request2 = create :merge_request, author: @user, project: project2
+  def should_not_see(merge_request)
+    page.should_not have_content(merge_request.title[0..10])
+  end
+
+  def assigned_merge_request
+    @assigned_merge_request ||= create :merge_request, assignee: current_user, target_project: project
+  end
+
+  def authored_merge_request
+    @authored_merge_request ||= create :merge_request, author: current_user, target_project: project
+  end
+
+  def other_merge_request
+    @other_merge_request ||= create :merge_request, target_project: project
+  end
+
+  def project
+    @project ||= begin
+                   project =create :project
+                   project.team << [current_user, :master]
+                   project
+                 end
   end
 end

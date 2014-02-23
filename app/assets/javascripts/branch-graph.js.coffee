@@ -62,22 +62,22 @@ class BranchGraph
     cuday = 0
     cumonth = ""
 
-    r.rect(0, 0, 26, @barHeight).attr fill: "#222"
-    r.rect(26, 0, 20, @barHeight).attr fill: "#444"
+    r.rect(0, 0, 40, @barHeight).attr fill: "#222"
+    r.rect(40, 0, 30, @barHeight).attr fill: "#444"
 
     for day, mm in @days
       if cuday isnt day[0]
         # Dates
-        r.text(36, @offsetY + @unitTime * mm, day[0])
+        r.text(55, @offsetY + @unitTime * mm, day[0])
           .attr(
             font: "12px Monaco, monospace"
-            fill: "#DDD"
+            fill: "#BBB"
           )
         cuday = day[0]
 
       if cumonth isnt day[1]
         # Months
-        r.text(13, @offsetY + @unitTime * mm, day[1])
+        r.text(20, @offsetY + @unitTime * mm, day[1])
           .attr(
             font: "12px Monaco, monospace"
             fill: "#EEE"
@@ -194,11 +194,14 @@ class BranchGraph
       fill: @colors[commit.space]
       stroke: "none"
     )
-    r.rect(@offsetX + @unitSpace * @mspace + 10, y - 10, 20, 20).attr(
-      fill: "url(#{commit.author.icon})"
+
+    avatar_box_x = @offsetX + @unitSpace * @mspace + 10
+    avatar_box_y = y - 10
+    r.rect(avatar_box_x, avatar_box_y, 20, 20).attr(
       stroke: @colors[commit.space]
       "stroke-width": 2
     )
+    r.image(commit.author.icon, avatar_box_x, avatar_box_y, 20, 20)
     r.text(@offsetX + @unitSpace * @mspace + 35, y, commit.message.split("\n")[0]).attr(
       "text-anchor": "start"
       font: "14px Monaco, monospace"

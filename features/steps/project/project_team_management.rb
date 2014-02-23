@@ -10,17 +10,17 @@ class ProjectTeamManagement < Spinach::FeatureSteps
   end
 
   And 'I should see "Sam" in team list' do
-    user = User.find_by_name("Sam")
+    user = User.find_by(name: "Sam")
     page.should have_content(user.name)
     page.should have_content(user.username)
   end
 
   Given 'I click link "New Team Member"' do
-    click_link "New Team Member"
+    click_link "New project member"
   end
 
   And 'I select "Mike" as "Reporter"' do
-    user = User.find_by_name("Mike")
+    user = User.find_by(name: "Mike")
 
     select2(user.id, from: "#user_ids", multiple: true)
     within "#new_team_member" do
@@ -42,7 +42,7 @@ class ProjectTeamManagement < Spinach::FeatureSteps
   end
 
   And 'I change "Sam" role to "Reporter"' do
-    user = User.find_by_name("Sam")
+    user = User.find_by(name: "Sam")
     within "#user_#{user.id}" do
       select "Reporter", from: "team_member_project_access"
     end
@@ -59,7 +59,7 @@ class ProjectTeamManagement < Spinach::FeatureSteps
   end
 
   And 'I should not see "Sam" in team list' do
-    user = User.find_by_name("Sam")
+    user = User.find_by(name: "Sam")
     page.should_not have_content(user.name)
     page.should_not have_content(user.username)
   end
@@ -73,34 +73,34 @@ class ProjectTeamManagement < Spinach::FeatureSteps
   end
 
   And '"Sam" is "Shop" developer' do
-    user = User.find_by_name("Sam")
-    project = Project.find_by_name("Shop")
+    user = User.find_by(name: "Sam")
+    project = Project.find_by(name: "Shop")
     project.team << [user, :developer]
   end
 
   Given 'I own project "Website"' do
-    @project = create(:project, name: "Website", namespace: @user.namespace)
+    @project = create(:empty_project, name: "Website", namespace: @user.namespace)
     @project.team << [@user, :master]
   end
 
   And '"Mike" is "Website" reporter' do
-    user = User.find_by_name("Mike")
-    project = Project.find_by_name("Website")
+    user = User.find_by(name: "Mike")
+    project = Project.find_by(name: "Website")
     project.team << [user, :reporter]
   end
 
   And 'I click link "Import team from another project"' do
-    click_link "Import team from another project"
+    click_link "Import members from another project"
   end
 
   When 'I submit "Website" project for import team' do
-    project = Project.find_by_name("Website")
+    project = Project.find_by(name: "Website")
     select project.name_with_namespace, from: 'source_project_id'
     click_button 'Import'
   end
 
   step 'I click cancel link for "Sam"' do
-    within "#user_#{User.find_by_name('Sam').id}" do
+    within "#user_#{User.find_by(name: 'Sam').id}" do
       click_link('Remove user from team')
     end
   end

@@ -7,7 +7,7 @@
       private
 
   .pull-right
-    = link_to new_snippet_path, class: "btn btn-small add_new grouped btn-primary", title: "New Snippet" do
+    = link_to new_snippet_path, class: "btn btn-new btn-small", title: "New Snippet" do
       Add new snippet
 
 
@@ -17,7 +17,7 @@
     %span.light
       by
       = link_to user_snippets_path(@snippet.author) do
-        = image_tag gravatar_icon(@snippet.author_email), class: "avatar avatar-inline s16"
+        = image_tag avatar_icon(@snippet.author_email), class: "avatar avatar-inline s16"
         = @snippet.author_name
 
   .back-link

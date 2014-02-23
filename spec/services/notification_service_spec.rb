@@ -16,6 +16,19 @@ describe NotificationService do
     end
   end
 
+  describe 'Email' do
+    describe :new_email do
+      let(:email) { create(:email) }
+
+      it { notification.new_email(email).should be_true }
+
+      it 'should send email to email owner' do
+        Notify.should_receive(:new_email_email).with(email.id)
+        notification.new_email(email)
+      end
+    end
+  end
+
   describe 'Notes' do
     context 'issue note' do
       let(:issue) { create(:issue, assignee: create(:user)) }
@@ -48,40 +61,41 @@ describe NotificationService do
     end
 
     context 'commit note' do
-      let(:note) { create :note_on_commit }
+      let(:note) { create(:note_on_commit) }
 
       before do
         build_team(note.project)
+        note.stub(:commit_author => @u_committer)
       end
 
       describe :new_note do
         it do
-          should_email(@u_watcher.id)
-          should_not_email(note.author_id)
-          should_not_email(@u_participating.id)
-          should_not_email(@u_disabled.id)
+          should_email(@u_committer.id, note)
+          should_email(@u_watcher.id, note)
+          should_not_email(@u_mentioned.id, note)
+          should_not_email(note.author_id, note)
+          should_not_email(@u_participating.id, note)
+          should_not_email(@u_disabled.id, note)
           notification.new_note(note)
         end
 
         it do
-          create(:note_on_commit,
-                 author: @u_participating,
-                 project_id: note.project_id,
-                 commit_id: note.commit_id)
-
-          should_email(@u_watcher.id)
-          should_email(@u_participating.id)
-          should_not_email(note.author_id)
-          should_not_email(@u_disabled.id)
+          note.update_attribute(:note, '@mention referenced')
+          should_email(@u_committer.id, note)
+          should_email(@u_watcher.id, note)
+          should_email(@u_mentioned.id, note)
+          should_not_email(note.author_id, note)
+          should_not_email(@u_participating.id, note)
+          should_not_email(@u_disabled.id, note)
           notification.new_note(note)
         end
 
-        def should_email(user_id)
-          Notify.should_receive(:note_commit_email).with(user_id, note.id)
+        def should_email(user_id, n)
+          Notify.should_receive(:note_commit_email).with(user_id, n.id)
         end
 
-        def should_not_email(user_id)
-          Notify.should_not_receive(:note_commit_email).with(user_id, note.id)
+        def should_not_email(user_id, n)
+          Notify.should_not_receive(:note_commit_email).with(user_id, n.id)
         end
       end
     end
@@ -156,7 +170,7 @@ describe NotificationService do
     let(:merge_request) { create :merge_request, assignee: create(:user) }
 
     before do
-      build_team(merge_request.project)
+      build_team(merge_request.target_project)
     end
 
     describe :new_merge_request do
@@ -232,15 +246,42 @@ describe NotificationService do
     end
   end
 
+  describe 'Projects' do
+    let(:project) { create :project }
+
+    before do
+      build_team(project)
+    end
+
+    describe :project_was_moved do
+      it do
+        should_email(@u_watcher.id)
+        should_email(@u_participating.id)
+        should_not_email(@u_disabled.id)
+        notification.project_was_moved(project)
+      end
+
+      def should_email(user_id)
+        Notify.should_receive(:project_was_moved_email).with(project.id, user_id)
+      end
+
+      def should_not_email(user_id)
+        Notify.should_not_receive(:project_was_moved_email).with(project.id, user_id)
+      end
+    end
+  end
+
   def build_team(project)
     @u_watcher = create(:user, notification_level: Notification::N_WATCH)
     @u_participating = create(:user, notification_level: Notification::N_PARTICIPATING)
     @u_disabled = create(:user, notification_level: Notification::N_DISABLED)
-    @u_mentioned = create(:user, username: 'mention', notification_level: Notification::N_WATCH)
+    @u_mentioned = create(:user, username: 'mention', notification_level: Notification::N_PARTICIPATING)
+    @u_committer = create(:user, username: 'committer')
 
     project.team << [@u_watcher, :master]
     project.team << [@u_participating, :master]
     project.team << [@u_disabled, :master]
     project.team << [@u_mentioned, :master]
+    project.team << [@u_committer, :master]
   end
 end

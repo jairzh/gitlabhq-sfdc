@@ -9,23 +9,21 @@ module Issuable
   include Mentionable
 
   included do
-    belongs_to :project
     belongs_to :author, class_name: "User"
     belongs_to :assignee, class_name: "User"
     belongs_to :milestone
     has_many :notes, as: :noteable, dependent: :destroy
 
-    validates :project, presence: true
     validates :author, presence: true
     validates :title, presence: true, length: { within: 0..255 }
 
-    scope :opened, -> { with_state(:opened) }
-    scope :closed, -> { with_state(:closed) }
-    scope :of_group, ->(group) { where(project_id: group.project_ids) }
+    scope :authored, ->(user) { where(author_id: user) }
     scope :assigned_to, ->(u) { where(assignee_id: u.id)}
     scope :recent, -> { order("created_at DESC") }
     scope :assigned, -> { where("assignee_id IS NOT NULL") }
     scope :unassigned, -> { where("assignee_id IS NULL") }
+    scope :of_projects, ->(ids) { where(project_id: ids) }
+
 
     delegate :name,
              :email,
@@ -39,11 +37,25 @@ module Issuable
              prefix: true
 
     attr_accessor :author_id_of_changes
+
+    attr_mentionable :title, :description
   end
 
   module ClassMethods
     def search(query)
       where("title like :query", query: "%#{query}%")
+    end
+
+    def sort(method)
+      case method.to_s
+      when 'newest' then reorder("#{table_name}.created_at DESC")
+      when 'oldest' then reorder("#{table_name}.created_at ASC")
+      when 'recently_updated' then reorder("#{table_name}.updated_at DESC")
+      when 'last_updated' then reorder("#{table_name}.updated_at ASC")
+      when 'milestone_due_soon' then joins(:milestone).reorder("milestones.due_date ASC")
+      when 'milestone_due_later' then joins(:milestone).reorder("milestones.due_date DESC")
+      else reorder("#{table_name}.created_at DESC")
+      end
     end
   end
 
@@ -110,5 +122,12 @@ module Issuable
       mentions << note.mentioned_users
     end
     users.concat(mentions.reduce([], :|)).uniq
+  end
+
+  def to_hook_data
+    {
+      object_kind: self.class.name.underscore,
+      object_attributes: self.attributes
+    }
   end
 end

@@ -47,18 +47,17 @@ class ProjectSnippets < Spinach::FeatureSteps
     end
   end
 
-  And 'I click link "Destroy"' do
-    click_link "Destroy"
+  And 'I click link "Remove Snippet"' do
+    click_link "Remove snippet"
   end
 
   And 'I submit new snippet "Snippet three"' do
     fill_in "project_snippet_title", :with => "Snippet three"
-    select "forever", :from => "project_snippet_expires_at"
     fill_in "project_snippet_file_name", :with => "my_snippet.rb"
     within('.file-editor') do
       find(:xpath, "//input[@id='project_snippet_content']").set 'Content of snippet three'
     end
-    click_button "Save"
+    click_button "Create snippet"
   end
 
   Then 'I should see snippet "Snippet three"' do
@@ -91,10 +90,10 @@ class ProjectSnippets < Spinach::FeatureSteps
   end
 
   def project
-    @project ||= Project.find_by_name!("Shop")
+    @project ||= Project.find_by!(name: "Shop")
   end
 
   def project_snippet
-    @project_snippet ||= ProjectSnippet.find_by_title!("Snippet One")
+    @project_snippet ||= ProjectSnippet.find_by!(title: "Snippet one")
   end
 end

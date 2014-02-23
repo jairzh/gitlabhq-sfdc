@@ -1,8 +1,8 @@
 class window.ContributorsGraph
   MARGIN:
     top: 20
-    right: 20 
-    bottom: 30 
+    right: 20
+    bottom: 30
     left: 50
   x_domain: null
   y_domain: null
@@ -38,7 +38,7 @@ class window.ContributorsGraph
     @y = d3.scale.linear().range([height, 0]).nice()
   draw_x_axis: ->
     @svg.append("g").attr("class", "x axis").attr("transform", "translate(0, #{@height})")
-    .call(@x_axis);
+    .call(@x_axis)
   draw_y_axis: ->
     @svg.append("g").attr("class", "y axis").call(@y_axis)
   set_data: (data) ->
@@ -46,12 +46,8 @@ class window.ContributorsGraph
 
 class window.ContributorsMasterGraph extends ContributorsGraph
   constructor: (@data) ->
-    if $(window).width() > 1214
-      @width = 1100
-    else
-      @width = 870
-
-    @height = 125
+    @width = $('.container').width() - 70
+    @height = 200
     @x = null
     @y = null
     @x_axis = null
@@ -61,7 +57,7 @@ class window.ContributorsMasterGraph extends ContributorsGraph
     @brush = null
     @x_max_domain = null
   process_dates: (data) ->
-    dates = @get_dates(data) 
+    dates = @get_dates(data)
     @parse_dates(data)
     ContributorsGraph.set_dates(dates)
   get_dates: (data) ->
@@ -87,14 +83,15 @@ class window.ContributorsMasterGraph extends ContributorsGraph
     @area = d3.svg.area().x((d) ->
       x(d.date)
     ).y0(@height).y1((d) ->
-      y(d.commits = d.commits ? d.additions ? d.deletions)
+      xa = d.commits = d.commits ? d.additions ? d.deletions
+      y(xa)
     ).interpolate("basis")
   create_brush: ->
-    @brush = d3.svg.brush().x(@x).on("brushend", @update_content);
+    @brush = d3.svg.brush().x(@x).on("brushend", @update_content)
   draw_path: (data) ->
-    @svg.append("path").datum(data).attr("class", "area").attr("d", @area);
+    @svg.append("path").datum(data).attr("class", "area").attr("d", @area)
   add_brush: ->
-    @svg.append("g").attr("class", "selection").call(@brush).selectAll("rect").attr("height", @height);
+    @svg.append("g").attr("class", "selection").call(@brush).selectAll("rect").attr("height", @height)
   update_content: =>
     ContributorsGraph.set_x_domain(if @brush.empty() then @x_max_domain else @brush.extent())
     $("#brush_change").trigger('change')
@@ -122,12 +119,8 @@ class window.ContributorsMasterGraph extends ContributorsGraph
 
 class window.ContributorsAuthorGraph extends ContributorsGraph
   constructor: (@data) ->
-    if $(window).width() > 1214
-      @width = 490
-    else
-      @width = 380
-    
-    @height = 130
+    @width = $('.container').width()/2 - 100
+    @height = 200
     @x = null
     @y = null
     @x_axis = null

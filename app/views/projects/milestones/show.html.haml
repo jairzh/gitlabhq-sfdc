@@ -1,44 +1,38 @@
 = render "projects/issues/head"
-.row
-  .span6
-    %h3.page-title
-      Milestone ##{@milestone.id}
-      %small
-        = @milestone.expires_at
-    .back-link
-      = link_to project_milestones_path(@project) do
-        &larr; To milestones list
-  .span6
-    .pull-right
-      - unless  @milestone.closed?
-        = link_to new_project_issue_path(@project, issue: { milestone_id: @milestone.id }), class: "btn btn-small grouped", title: "New Issue" do
-          %i.icon-plus
-          New Issue
-        = link_to 'Browse Issues', project_issues_path(@milestone.project, milestone_id: @milestone.id), class: "btn edit-milestone-link small grouped"
-        - if can?(current_user, :admin_milestone, @project)
-          = link_to edit_project_milestone_path(@project, @milestone), class: "btn btn-small grouped" do
-            %i.icon-edit
-            Edit
+%h3.page-title
+  Milestone ##{@milestone.iid}
+  %small
+    = @milestone.expires_at
+  - if @milestone.closed?
+    %span.state-label.state-label-red Closed
+  - elsif @milestone.expired?
+    %span.state-label.state-label-red Expired
+  - else
+    %span.state-label.state-label-green Open
+  .pull-right
+    - if can?(current_user, :admin_milestone, @project)
+      = link_to edit_project_milestone_path(@project, @milestone), class: "btn grouped" do
+        %i.icon-edit
+        Edit
+      - if @milestone.active?
+        = link_to 'Close Milestone', project_milestone_path(@project, @milestone, milestone: {state_event: :close }), method: :put, class: "btn btn-remove grouped"
+      - else
+        = link_to 'Reopen Milestone', project_milestone_path(@project, @milestone, milestone: {state_event: :activate }), method: :put, class: "btn grouped"
 
-
-
-- if @milestone.can_be_closed?
-  %hr
-  %p
+- if @milestone.issues.any? && @milestone.can_be_closed?
+  .alert.alert-success
     %span All issues for this milestone are closed. You may close milestone now.
-    = link_to 'Close Milestone', project_milestone_path(@project, @milestone, milestone: {state_event: :close }), method: :put, class: "btn btn-small btn-remove"
 
-.ui-box.ui-box-show
-  .ui-box-head
-    %h4.box-title
-      - if @milestone.closed?
-        .error.status_info Closed
-      - elsif @milestone.expired?
-        .error.status_info Expired
+.back-link
+  = link_to project_milestones_path(@project) do
+    &larr; To milestones list
 
-      = gfm escape_once(@milestone.title)
 
-  .ui-box-body
+.issue-box
+  %h4.title
+    = gfm escape_once(@milestone.title)
+
+  .context
     %p
       Progress:
       #{@milestone.closed_items_count} closed
@@ -46,14 +40,13 @@
       #{@milestone.open_items_count} open
       %span.pull-right= @milestone.expires_at
     .progress.progress-info
-      .bar{style: "width: #{@milestone.percent_complete}%;"}
-
+      .progress-bar{style: "width: #{@milestone.percent_complete}%;"}
 
   - if @milestone.description.present?
-    .ui-box-bottom
-      = preserve do
-        = markdown @milestone.description
-
+    .description
+      .wiki
+        = preserve do
+          = markdown @milestone.description
 
 %ul.nav.nav-tabs
   %li.active
@@ -69,26 +62,31 @@
       Participants
       %span.badge= @users.count
 
+  .pull-right
+    = link_to new_project_issue_path(@project, issue: { milestone_id: @milestone.id }), class: "btn btn-small grouped", title: "New Issue" do
+      %i.icon-plus
+      New Issue
+    = link_to 'Browse Issues', project_issues_path(@milestone.project, milestone_id: @milestone.id), class: "btn btn-small edit-milestone-link grouped"
 
 .tab-content
   .tab-pane.active#tab-issues
     .row
-      .span4
+      .col-md-4
         = render('issues', title: 'Unstarted Issues (open and unassigned)', issues: @issues.opened.unassigned)
-      .span4
+      .col-md-4
         = render('issues', title: 'Ongoing Issues (open and assigned)', issues: @issues.opened.assigned)
-      .span4
+      .col-md-4
         = render('issues', title: 'Completed Issues (closed)', issues: @issues.closed)
 
   .tab-pane#tab-merge-requests
     .row
-      .span6
+      .col-md-6
         .ui-box
           .title Open
           %ul.well-list
             - @merge_requests.opened.each do |merge_request|
               = render 'merge_request', merge_request: merge_request
-      .span6
+      .col-md-6
         .ui-box
           .title Closed
           %ul.well-list
@@ -100,7 +98,7 @@
       - @users.each do |user|
         %li
           = link_to user, title: user.name, class: "dark" do
-            = image_tag gravatar_icon(user.email, 32), class: "avatar s32"
+            = image_tag avatar_icon(user.email, 32), class: "avatar s32"
             %strong= truncate(user.name, lenght: 40)
             %br
             %small.cgray= user.username

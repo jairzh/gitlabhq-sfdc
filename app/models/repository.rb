@@ -1,12 +1,17 @@
 class Repository
   include Gitlab::ShellAdapter
 
-  attr_accessor :raw_repository
+  attr_accessor :raw_repository, :path_with_namespace
 
-  def initialize(path_with_namespace, default_branch)
-    @raw_repository = Gitlab::Git::Repository.new(path_with_namespace, default_branch)
+  def initialize(path_with_namespace, default_branch = nil)
+    @path_with_namespace = path_with_namespace
+    @raw_repository = Gitlab::Git::Repository.new(path_to_repo) if path_with_namespace
   rescue Gitlab::Git::Repository::NoRepository
     nil
+  end
+
+  def path_to_repo
+    @path_to_repo ||= File.join(Gitlab.config.gitlab_shell.repos_path, path_with_namespace + ".git")
   end
 
   def exists?
@@ -18,19 +23,26 @@ class Repository
   end
 
   def commit(id = nil)
-    commit = raw_repository.commit(id)
+    return nil unless raw_repository
+    commit = Gitlab::Git::Commit.find(raw_repository, id)
     commit = Commit.new(commit) if commit
     commit
   end
 
   def commits(ref, path = nil, limit = nil, offset = nil)
-    commits = raw_repository.commits(ref, path, limit, offset)
+    commits = Gitlab::Git::Commit.where(
+      repo: raw_repository,
+      ref: ref,
+      path: path,
+      limit: limit,
+      offset: offset,
+    )
     commits = Commit.decorate(commits) if commits.present?
     commits
   end
 
-  def commits_between(target, source)
-    commits = raw_repository.commits_between(target, source)
+  def commits_between(from, to)
+    commits = Gitlab::Git::Commit.between(raw_repository, from, to)
     commits = Commit.decorate(commits) if commits.present?
     commits
   end
@@ -41,6 +53,12 @@ class Repository
 
   def find_tag(name)
     tags.find { |tag| tag.name == name }
+  end
+
+  def recent_branches(limit = 20)
+    branches.sort do |a, b|
+      commit(b.target).committed_date <=> commit(a.target).committed_date
+    end[0..limit]
   end
 
   def add_branch(branch_name, ref)
@@ -93,7 +111,11 @@ class Repository
 
   def commit_count
     Rails.cache.fetch(cache_key(:commit_count)) do
-      raw_repository.raw.commit_count
+      begin
+        raw_repository.raw.commit_count
+      rescue
+        0
+      end
     end
   end
 
@@ -111,6 +133,7 @@ class Repository
     Rails.cache.delete(cache_key(:tag_names))
     Rails.cache.delete(cache_key(:commit_count))
     Rails.cache.delete(cache_key(:graph_log))
+    Rails.cache.delete(cache_key(:readme))
   end
 
   def graph_log
@@ -132,5 +155,57 @@ class Repository
     return true if raw_repository.respond_to?(method)
 
     super
+  end
+
+  def blob_at(sha, path)
+    Gitlab::Git::Blob.find(self, sha, path)
+  end
+
+  def readme
+    Rails.cache.fetch(cache_key(:readme)) do
+      tree(:head).readme
+    end
+  end
+
+  def head_commit
+    commit(self.root_ref)
+  end
+
+  def tree(sha = :head, path = nil)
+    if sha == :head
+      sha = head_commit.sha
+    end
+
+    Tree.new(self, sha, path)
+  end
+
+  def blob_at_branch(branch_name, path)
+    last_commit = commit(branch_name)
+
+    if last_commit
+      blob_at(last_commit.sha, path)
+    else
+      nil
+    end
+  end
+
+  # Returns url for submodule
+  #
+  # Ex.
+  #   @repository.submodule_url_for('master', 'rack')
+  #   # => git@localhost:rack.git
+  #
+  def submodule_url_for(ref, path)
+    if submodules.any?
+      submodule = submodules(ref)[path]
+
+      if submodule
+        submodule['url']
+      end
+    end
+  end
+
+  def last_commit_for_path(sha, path)
+    commits(sha, path, 1).last
   end
 end
