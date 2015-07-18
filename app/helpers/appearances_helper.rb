@@ -4,7 +4,7 @@ module AppearancesHelper
   end
 
   def brand_title
-    'GitLab Community Edition'
+    'Megitlab - Meginfo Gitlab'
   end
 
   def brand_image
