@@ -26,6 +26,7 @@ gem 'omniauth-gitlab'
 gem 'omniauth-bitbucket'
 gem 'omniauth-saml'
 gem 'omniauth-salesforce'
+gem 'omniauth-facebook'
 gem 'doorkeeper', '2.1.3'
 gem "rack-oauth2", "~> 1.0.5"
 
