@@ -4,7 +4,7 @@ module OauthHelper
   end
 
   def default_providers
-    [:twitter, :github, :gitlab, :bitbucket, :google_oauth2, :ldap]
+    [:twitter, :github, :gitlab, :bitbucket, :google_oauth2, :ldap, :salesforce]
   end
 
   def enabled_oauth_providers
