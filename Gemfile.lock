@@ -497,6 +497,9 @@ GEM
     omniauth-twitter (1.2.1)
       json (~> 1.3)
       omniauth-oauth (~> 1.1)
+    omniauth-salesforce (1.0.5)
+      omniauth (~> 1.0)
+      omniauth-oauth2 (~> 1.0)
     omniauth_crowd (2.2.3)
       activesupport
       nokogiri (>= 1.4.4)
@@ -939,6 +942,7 @@ DEPENDENCIES
   omniauth-shibboleth (~> 1.2.0)
   omniauth-twitter (~> 1.2.0)
   omniauth_crowd (~> 2.2.0)
+  omniauth-salesforce (~> 1.0.5)
   org-ruby (~> 0.9.12)
   paranoia (~> 2.2)
   pg (~> 0.18.2)
