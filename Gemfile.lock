@@ -915,6 +915,7 @@ DEPENDENCIES
   omniauth-shibboleth (~> 1.2.0)
   omniauth-twitter (~> 1.2.0)
   omniauth_crowd (~> 2.2.0)
+  omniauth-salesforce (~> 1.0.5)
   org-ruby (~> 0.9.12)
   paranoia (~> 2.0)
   pg (~> 0.18.2)
